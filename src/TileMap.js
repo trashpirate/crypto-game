@@ -79,9 +79,9 @@ export default class TileMap {
   }
 
   #drawPowerReward(ctx, col, row, size) {
-    this.powerRewardAnmationTimer--;
-    if (this.powerRewardAnmationTimer === 0) {
-      this.powerRewardAnmationTimer = this.powerRewardAnmationTimerDefault;
+    this.powerRewardAnimationTimer--;
+    if (this.powerRewardAnimationTimer === 0) {
+      this.powerRewardAnimationTimer = this.powerRewardAnimationTimerDefault;
       if (this.powerReward == this.rewardFlash) {
         this.powerReward = this.reward;
       } else {
@@ -184,12 +184,34 @@ export default class TileMap {
     return false;
   }
 
+  didWin() {
+    return this.#dotsLeft() === 0;
+  }
+
+  #dotsLeft() {
+    return this.map.flat().filter((tile) => tile === 0).length;
+  }
+
   eatReward(x, y) {
     const row = y / this.tileSize;
     const col = x / this.tileSize;
 
     if (Number.isInteger(row) && Number.isInteger(col)) {
-      if (this.map[row][col] == 0) {
+      if (this.map[row][col] === 0) {
+        this.map[row][col] = 5;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  eatPowerReward(x, y) {
+    const row = y / this.tileSize;
+    const col = x / this.tileSize;
+
+    if (Number.isInteger(row) && Number.isInteger(col)) {
+      const tile = this.map[row][col];
+      if (this.map[row][col] === 7) {
         this.map[row][col] = 5;
         return true;
       }

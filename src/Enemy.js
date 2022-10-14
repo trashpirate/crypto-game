@@ -16,15 +16,56 @@ export default class Enemy {
 
     this.directionTimerDefault = this.#random(10, 50);
     this.directionTimer = this.directionTimerDefault;
+
+    this.scaredAboutToExpireDefault = 10;
+    this.scaredAboutToExpireTimer = this.scaredAboutToExpireDefault;
   }
 
-  draw(ctx, pause) {
+  draw(ctx, pause, player) {
     if (!pause) {
       this.#move();
       this.#changeDirection();
     }
+    this.#setImage(ctx, player);
+  }
 
+  collideWith(player) {
+    const size = this.size / 2;
+    if (
+      this.x < player.x + size &&
+      this.x + size > player.x &&
+      this.y < player.y + size &&
+      this.y + size > player.y
+    ) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  #setImage(ctx, player) {
+    if (player.powerRewardActive) {
+      this.#setImageWhePowerDotIsActive(player);
+    } else {
+      this.image = this.normalEnemy;
+    }
     ctx.drawImage(this.image, this.x, this.y, this.size, this.size);
+  }
+
+  #setImageWhePowerDotIsActive(player) {
+    if (player.powerRewardAboutToExpire) {
+      this.scaredAboutToExpireTimer--;
+      if (this.scaredAboutToExpireTimer === 0) {
+        this.scaredAboutToExpireTimer = this.scaredAboutToExpireDefault;
+        if (this.image === this.scaredEnemy) {
+          this.image = this.scaredEnemy2;
+        } else {
+          this.image = this.scaredEnemy;
+        }
+      }
+    } else {
+      this.image = this.scaredEnemy;
+    }
   }
 
   #move() {

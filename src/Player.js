@@ -10,11 +10,19 @@ export default class Player {
 
     this.currentMovingDirection = null;
     this.requestedMovingDirection = null;
+    this.stop = true;
 
     this.playerAnimationTimerDefault = 10;
     this.playerAnimationTimer = null;
 
     this.rewardSound = new Audio("../sounds/reward_trimmed.wav");
+
+    this.powerRewardSound = new Audio("../sounds/powerReward.wav");
+    this.powerRewardActive = false;
+    this.powerRewardAboutToExpire = false;
+    this.timers = [];
+
+    this.eatEnemySound = new Audio("../sounds/eatEnemy.wav");
 
     this.madeFirstMove = false;
     document.addEventListener("keydown", this.#keydown);
@@ -22,10 +30,15 @@ export default class Player {
     this.#loadPlayerImages();
   }
 
-  draw(ctx) {
-    this.#move();
-    this.#animate();
+  draw(ctx, pause, enemies) {
+    if (!pause) {
+      this.#move();
+      this.#animate();
+    }
+
     this.#eatReward();
+    this.#eatPowerReward();
+    this.#eatEnemy(enemies);
     ctx.drawImage(
       this.playerImages[this.playerImageIndex],
       this.x,
@@ -142,8 +155,39 @@ export default class Player {
   }
 
   #eatReward() {
-    if (this.tileMap.eatReward(this.x, this.y)) {
+    if (this.tileMap.eatReward(this.x, this.y) && this.madeFirstMove) {
       this.rewardSound.play();
+    }
+  }
+
+  #eatPowerReward() {
+    if (this.tileMap.eatPowerReward(this.x, this.y) && this.madeFirstMove) {
+      this.powerRewardSound.play();
+      this.powerRewardActive = true;
+      this.powerRewardAboutToExpire = false;
+      this.timers.forEach((timer) => clearTimeout(timer));
+      this.timers = [];
+
+      let powerRewardTimer = setTimeout(() => {
+        this.powerRewardActive = false;
+        this.powerRewardAboutToExpire = false;
+      }, 1000 * 6);
+      this.timers.push(powerRewardTimer);
+
+      let powerRewardAboutToExpireTimer = setTimeout(() => {
+        this.powerRewardAboutToExpire = true;
+      }, 1000 * 3);
+      this.timers.push(powerRewardTimer);
+    }
+  }
+
+  #eatEnemy(enemies) {
+    if (this.powerRewardActive) {
+      const collideEnemies = enemies.filter((enemy) => enemy.collideWith(this));
+      collideEnemies.forEach((enemy) => {
+        enemies.splice(enemies.indexOf(enemy), 1);
+        this.eatEnemySound.play();
+      });
     }
   }
 }
